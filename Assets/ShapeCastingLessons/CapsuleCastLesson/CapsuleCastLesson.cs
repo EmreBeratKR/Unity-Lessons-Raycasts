@@ -1,10 +1,10 @@
+using UnityEditor;
 using UnityEngine;
 
 namespace CapsuleCastLesson
 {
     public class CapsuleCastLesson : MonoBehaviour
     {
-        [SerializeField] private Mesh capsuleMesh;
         [SerializeField] private LayerMask layerMask;
         [SerializeField, Min(0f)] private float capsuleHeight;
         [SerializeField, Min(0f)] private float capsuleRadius;
@@ -14,14 +14,14 @@ namespace CapsuleCastLesson
 
         private enum CapsuleCastType
         {
-            SphereCast,
-            SphereCastAll,
-            SphereCastAllDoubleSided,
+            CapsuleCast,
+            CapsuleCastAll,
+            CapsuleCastAllDoubleSided,
         }
 
 
-        private Vector3 CapsuleSize => new Vector3(capsuleRadius * 2f, capsuleHeight * 0.5f, capsuleRadius * 2f);
-        
+        private float CapsuleHeight => Mathf.Max(capsuleRadius * 2f, capsuleHeight);
+
 
         private void SphereCast(Vector3 point1, Vector3 point2, Vector3 direction)
         {
@@ -33,14 +33,14 @@ namespace CapsuleCastLesson
                 Gizmos.color = Color.green;
                 Gizmos.DrawRay(origin, direction * hitInfo.distance);
                 Gizmos.DrawSphere(hitInfo.point, 0.05f);
-                Gizmos.DrawWireMesh(capsuleMesh, origin + direction * hitInfo.distance, transform.rotation, CapsuleSize);
+                DrawWireCapsule(origin + direction * hitInfo.distance, Gizmos.color);
             }
 
             else
             {
                 Gizmos.color = Color.red;
                 Gizmos.DrawRay(origin, direction * maxDistance);
-                Gizmos.DrawWireMesh(capsuleMesh, origin + direction * maxDistance, transform.rotation, CapsuleSize);
+                DrawWireCapsule(origin + direction * maxDistance, Gizmos.color);
             }
         }
 
@@ -59,7 +59,7 @@ namespace CapsuleCastLesson
                 foreach (var hitInfo in hitInfos)
                 {
                     Gizmos.DrawSphere(hitInfo.point, 0.05f);
-                    Gizmos.DrawWireMesh(capsuleMesh, origin + direction * hitInfo.distance, transform.rotation, CapsuleSize);
+                    DrawWireCapsule(origin + direction * hitInfo.distance, Gizmos.color);
                 }
             }
 
@@ -67,7 +67,7 @@ namespace CapsuleCastLesson
             {
                 Gizmos.color = Color.red;
                 Gizmos.DrawRay(origin, direction * maxDistance);
-                Gizmos.DrawWireMesh(capsuleMesh, origin + direction * maxDistance, transform.rotation, CapsuleSize);
+                DrawWireCapsule(origin + direction * maxDistance, Gizmos.color);
             }
         }
 
@@ -79,25 +79,52 @@ namespace CapsuleCastLesson
         }
 
 
+        private void DrawWireCapsule(Vector3 position, Color color = default)
+        {
+            if (color != default)
+            {
+                Handles.color = color;
+            }
+            
+            var angleMatrix = Matrix4x4.TRS(position, transform.rotation, Handles.matrix.lossyScale);
+            using (new Handles.DrawingScope(angleMatrix))
+            {
+                var pointOffset = (CapsuleHeight - (capsuleRadius * 2)) / 2;
+                
+                Handles.DrawWireArc(Vector3.up * pointOffset, Vector3.left, Vector3.back, -180, capsuleRadius);
+                Handles.DrawLine(new Vector3(0, pointOffset, -capsuleRadius), new Vector3(0, -pointOffset, -capsuleRadius));
+                Handles.DrawLine(new Vector3(0, pointOffset, capsuleRadius), new Vector3(0, -pointOffset, capsuleRadius));
+                Handles.DrawWireArc(Vector3.down * pointOffset, Vector3.left, Vector3.back, 180, capsuleRadius);
+                
+                Handles.DrawWireArc(Vector3.up * pointOffset, Vector3.back, Vector3.left, 180, capsuleRadius);
+                Handles.DrawLine(new Vector3(-capsuleRadius, pointOffset, 0), new Vector3(-capsuleRadius, -pointOffset, 0));
+                Handles.DrawLine(new Vector3(capsuleRadius, pointOffset, 0), new Vector3(capsuleRadius, -pointOffset, 0));
+                Handles.DrawWireArc(Vector3.down * pointOffset, Vector3.back, Vector3.left, -180, capsuleRadius);
+                
+                Handles.DrawWireDisc(Vector3.up * pointOffset, Vector3.up, capsuleRadius);
+                Handles.DrawWireDisc(Vector3.down * pointOffset, Vector3.up, capsuleRadius);
+            }
+        }
+        
         private void OnDrawGizmos()
         {
             var origin = transform.position;
             var direction = transform.forward;
             var rotation = transform.rotation;
-            var point1 = origin + rotation * (Vector3.up * capsuleHeight * 0.5f);
-            var point2 = origin + rotation * (Vector3.down * capsuleHeight * 0.5f);
+            var point1 = origin + rotation * (Vector3.up * CapsuleHeight * 0.25f);
+            var point2 = origin + rotation * (Vector3.down * CapsuleHeight * 0.25f);
 
             switch (raycastType)
             {
-                case CapsuleCastType.SphereCast:
+                case CapsuleCastType.CapsuleCast:
                     SphereCast(point1, point2, direction);
                     break;
                 
-                case CapsuleCastType.SphereCastAll:
+                case CapsuleCastType.CapsuleCastAll:
                     SphereCastAll(point1, point2, direction);
                     break;
                 
-                case CapsuleCastType.SphereCastAllDoubleSided:
+                case CapsuleCastType.CapsuleCastAllDoubleSided:
                     SphereCastAllDoubleSided(point1, point2, direction);
                     break;
             }

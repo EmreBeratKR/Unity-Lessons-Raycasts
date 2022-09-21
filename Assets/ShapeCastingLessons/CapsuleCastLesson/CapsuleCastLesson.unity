@@ -358,14 +358,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf953397afa494861bf284cf245be0d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  capsuleMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
   layerMask:
     serializedVersion: 2
     m_Bits: 2147483647
-  capsuleHeight: 2
-  capsuleRadius: 0.5
+  capsuleHeight: 1
+  capsuleRadius: 0.25
   maxDistance: 20
-  raycastType: 1
+  raycastType: 0
 --- !u!1 &850059886
 GameObject:
   m_ObjectHideFlags: 0
